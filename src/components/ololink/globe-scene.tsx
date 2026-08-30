@@ -480,7 +480,20 @@ function DashedLine({
  */
 const DOWN_PACKETS = 3;
 
-function PassBeam({ satId, rxId, live }: { satId: string; rxId: string; live: LiveMap }) {
+/** LEO -> HAPS optical crosslink colour (straight green laser). */
+const LASER_GREEN = '#22c55e';
+
+function PassBeam({
+  satId,
+  rxId,
+  live,
+  laser = false,
+}: {
+  satId: string;
+  rxId: string;
+  live: LiveMap;
+  laser?: boolean;
+}) {
   const N = 2;
   const core = useRef<THREE.Line>(null);
   const packs = useRef<THREE.Group>(null);
@@ -533,7 +546,7 @@ function PassBeam({ satId, rxId, live }: { satId: string; rxId: string; live: Li
 
     if (core.current) {
       const m = core.current.material as THREE.LineBasicMaterial;
-      m.opacity = v * 0.28;
+      m.opacity = v * (laser ? 0.95 : 0.28);
       core.current.visible = v > 0.02;
     }
     if (packs.current) {
@@ -566,7 +579,7 @@ function PassBeam({ satId, rxId, live }: { satId: string; rxId: string; live: Li
       {/* @ts-expect-error three line primitive */}
       <line ref={core} geometry={geometry}>
         <lineBasicMaterial
-          color={CYAN}
+          color={laser ? LASER_GREEN : CYAN}
           transparent
           opacity={0}
           depthWrite={false}
@@ -578,7 +591,7 @@ function PassBeam({ satId, rxId, live }: { satId: string; rxId: string; live: Li
           <mesh key={i}>
             <sphereGeometry args={[0.004, 8, 8]} />
             <meshBasicMaterial
-              color="#f0f9ff"
+              color={laser ? '#86efac' : '#f0f9ff'}
               transparent
               opacity={0}
               depthWrite={false}
@@ -664,7 +677,8 @@ function PassNetwork({ live, running }: { live: LiveMap; running: boolean }) {
     <>
       {pairs.map((key) => {
         const [satId, rxId] = key.split('|') as [string, string];
-        return <PassBeam key={key} satId={satId} rxId={rxId} live={live} />;
+        const laser = ASSET_BY_ID[rxId]?.kind === 'haps';
+        return <PassBeam key={key} satId={satId} rxId={rxId} live={live} laser={laser} />;
       })}
     </>
   );
