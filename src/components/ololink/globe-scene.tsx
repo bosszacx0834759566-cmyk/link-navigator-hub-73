@@ -690,6 +690,54 @@ function PassNetwork({ live, running }: { live: LiveMap; running: boolean }) {
  */
 const HAPS_RECEIVERS = ASSETS.filter((a) => a.kind === 'haps');
 
+function LaserBeam({
+  satId,
+  rxId,
+  live,
+}: {
+  satId: string;
+  rxId: string;
+  live: LiveMap;
+}) {
+  const N = 1;
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array((N + 1) * 3), 3));
+    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 4);
+    return g;
+  }, []);
+
+  const scratch = useMemo(
+    () => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), p: new THREE.Vector3() }),
+    []
+  );
+
+  useFrame(() => {
+    const from = live.get(satId);
+    const to = live.get(rxId);
+    if (!from || !to) return;
+    const { a, b, p } = scratch;
+    a.copy(from);
+    b.copy(to);
+    const attr = geometry.getAttribute('position') as THREE.BufferAttribute;
+    const arr = attr.array as Float32Array;
+    for (let i = 0; i <= N; i++) {
+      p.copy(a).lerp(b, i / N);
+      arr[i * 3] = p.x;
+      arr[i * 3 + 1] = p.y;
+      arr[i * 3 + 2] = p.z;
+    }
+    attr.needsUpdate = true;
+  });
+
+  return (
+    // @ts-expect-error three line primitive
+    <line geometry={geometry}>
+      <lineBasicMaterial color="#16a34a" transparent opacity={1} depthWrite={false} />
+    </line>
+  );
+}
+
 function HapsLaserNetwork({ live, running }: { live: LiveMap; running: boolean }) {
   const [pairs, setPairs] = useState<string[]>([]);
   const held = useRef<Set<string>>(new Set());
@@ -730,7 +778,7 @@ function HapsLaserNetwork({ live, running }: { live: LiveMap; running: boolean }
     <>
       {pairs.map((key) => {
         const [satId, rxId] = key.split('|') as [string, string];
-        return <PassBeam key={key} satId={satId} rxId={rxId} live={live} laser />;
+        return <LaserBeam key={key} satId={satId} rxId={rxId} live={live} />;
       })}
     </>
   );
