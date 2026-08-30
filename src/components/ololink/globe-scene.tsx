@@ -699,42 +699,54 @@ function LaserBeam({
   rxId: string;
   live: LiveMap;
 }) {
-  const N = 1;
-  const geometry = useMemo(() => {
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array((N + 1) * 3), 3));
-    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 4);
-    return g;
-  }, []);
-
+  const group = useRef<THREE.Group>(null);
   const scratch = useMemo(
-    () => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), p: new THREE.Vector3() }),
+    () => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), mid: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0) }),
     []
   );
 
   useFrame(() => {
     const from = live.get(satId);
     const to = live.get(rxId);
-    if (!from || !to) return;
-    const { a, b, p } = scratch;
+    const g = group.current;
+    if (!from || !to || !g) return;
+    const { a, b, mid, up } = scratch;
     a.copy(from);
     b.copy(to);
-    const attr = geometry.getAttribute('position') as THREE.BufferAttribute;
-    const arr = attr.array as Float32Array;
-    for (let i = 0; i <= N; i++) {
-      p.copy(a).lerp(b, i / N);
-      arr[i * 3] = p.x;
-      arr[i * 3 + 1] = p.y;
-      arr[i * 3 + 2] = p.z;
-    }
-    attr.needsUpdate = true;
+    mid.copy(a).add(b).multiplyScalar(0.5);
+    const dist = a.distanceTo(b);
+    g.position.copy(mid);
+    g.quaternion.setFromUnitVectors(up, b.clone().sub(a).normalize());
+    g.scale.set(0.0022, dist, 0.0022);
   });
 
   return (
-    // @ts-expect-error three line primitive
-    <line geometry={geometry}>
-      <lineBasicMaterial color="#16a34a" transparent opacity={1} depthWrite={false} />
-    </line>
+    <group ref={group}>
+      {/* faint outer glow */}
+      <mesh>
+        <cylinderGeometry args={[1, 1, 1, 10, 1, true]} />
+        <meshBasicMaterial
+          color="#22c55e"
+          transparent
+          opacity={0.25}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* solid dark-green laser core */}
+      <mesh>
+        <cylinderGeometry args={[0.45, 0.45, 1, 10, 1, true]} />
+        <meshBasicMaterial
+          color="#16a34a"
+          transparent
+          opacity={0.95}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+    </group>
   );
 }
 
