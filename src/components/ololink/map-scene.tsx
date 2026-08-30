@@ -346,7 +346,7 @@ export function MapScene({ state }: { state: OloLinkState }) {
             };
             const sats = ASSETS.filter((a) => a.kind === 'satellite');
             const haps = ASSETS.filter((a) => a.kind === 'haps');
-            const lines: JSX.Element[] = [];
+            const lines: React.ReactElement[] = [];
             for (const h of haps) {
               const hp = positions[h.id];
               if (!hp) continue;
@@ -392,6 +392,7 @@ export function MapScene({ state }: { state: OloLinkState }) {
             return lines;
           })()}
 
+          {/* ------------------------------------------------------- nodes */}
 
           {ASSETS.filter((a) => a.kind === 'satellite' || a.kind === 'haps' || a.kind === 'drone' || a.kind === 'ground').map((a) => {
 
