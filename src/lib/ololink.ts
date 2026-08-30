@@ -245,12 +245,12 @@ function generateSites(count: number, startIndex: number, seed: number): Asset[]
 }
 
 const GENERATED_ASSETS: Asset[] = [
-  // LEO constellation — 23 generated (LEO-08…LEO-30) + 7 curated (LEO-01…LEO-07) = 30
+  // LEO constellation — 13 generated (LEO-08…LEO-20) + 7 curated (LEO-01…LEO-07) = 20
   ...generateFleet({
     kind: 'satellite',
     prefix: 'LEO',
     pad: 2,
-    count: 23,
+    count: 13,
     startIndex: 8,
     altMin: 500,
     altMax: 720,
@@ -291,7 +291,7 @@ export const ASSETS: Asset[] = [
   { id: 'cus-th', name: 'TH Enterprise Edge', kind: 'customer', lat: 13.9, lon: 100.85, altKm: 0, role: 'Fiber handoff', region: 'Thailand', health: 'NOMINAL' },
   { id: 'cus-us', name: 'US Metro Core', kind: 'customer', lat: 39.55, lon: -104.6, altKm: 0, role: 'Fiber handoff', region: 'United States', health: 'NOMINAL' },
 
-  // Generated fleet — brings totals to 30 LEO, 10 HAPS, 10 drones, 10 ground stations
+  // Generated fleet — brings totals to 20 LEO, 10 HAPS, 10 drones, 10 ground stations
   ...GENERATED_ASSETS,
 ];
 

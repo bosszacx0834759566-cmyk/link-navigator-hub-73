@@ -2097,7 +2097,7 @@ function SceneContent({
         <Earth />
       </Suspense>
 
-      {/* LEO constellation — 30 satellites propagated on their visual orbits */}
+      {/* LEO constellation — 20 satellites propagated on their visual orbits */}
       <OrbitDriver state={state} live={live} />
       {layers.orbits && SATELLITES.map((s) => <OrbitTrack key={`trk-${s.id}`} elId={s.id} />)}
       {SATELLITES.map((sat) => (
