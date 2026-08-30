@@ -690,6 +690,66 @@ function PassNetwork({ live, running }: { live: LiveMap; running: boolean }) {
  */
 const HAPS_RECEIVERS = ASSETS.filter((a) => a.kind === 'haps');
 
+function LaserBeam({
+  satId,
+  rxId,
+  live,
+}: {
+  satId: string;
+  rxId: string;
+  live: LiveMap;
+}) {
+  const group = useRef<THREE.Group>(null);
+  const scratch = useMemo(
+    () => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), mid: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0) }),
+    []
+  );
+
+  useFrame(() => {
+    const from = live.get(satId);
+    const to = live.get(rxId);
+    const g = group.current;
+    if (!from || !to || !g) return;
+    const { a, b, mid, up } = scratch;
+    a.copy(from);
+    b.copy(to);
+    mid.copy(a).add(b).multiplyScalar(0.5);
+    const dist = a.distanceTo(b);
+    g.position.copy(mid);
+    g.quaternion.setFromUnitVectors(up, b.clone().sub(a).normalize());
+    g.scale.set(0.022, dist, 0.022);
+  });
+
+  return (
+    <group ref={group}>
+      {/* faint outer glow */}
+      <mesh>
+        <cylinderGeometry args={[1, 1, 1, 12, 1, true]} />
+        <meshBasicMaterial
+          color="#4ade80"
+          transparent
+          opacity={0.3}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* solid dark-green laser core */}
+      <mesh>
+        <cylinderGeometry args={[0.45, 0.45, 1, 12, 1, true]} />
+        <meshBasicMaterial
+          color="#16a34a"
+          transparent
+          opacity={1}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 function HapsLaserNetwork({ live, running }: { live: LiveMap; running: boolean }) {
   const [pairs, setPairs] = useState<string[]>([]);
   const held = useRef<Set<string>>(new Set());
@@ -730,7 +790,7 @@ function HapsLaserNetwork({ live, running }: { live: LiveMap; running: boolean }
     <>
       {pairs.map((key) => {
         const [satId, rxId] = key.split('|') as [string, string];
-        return <PassBeam key={key} satId={satId} rxId={rxId} live={live} laser />;
+        return <LaserBeam key={key} satId={satId} rxId={rxId} live={live} />;
       })}
     </>
   );
