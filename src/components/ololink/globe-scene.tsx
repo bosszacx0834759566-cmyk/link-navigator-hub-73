@@ -480,7 +480,20 @@ function DashedLine({
  */
 const DOWN_PACKETS = 3;
 
-function PassBeam({ satId, rxId, live }: { satId: string; rxId: string; live: LiveMap }) {
+/** LEO -> HAPS optical crosslink colour (straight green laser). */
+const LASER_GREEN = '#22c55e';
+
+function PassBeam({
+  satId,
+  rxId,
+  live,
+  laser = false,
+}: {
+  satId: string;
+  rxId: string;
+  live: LiveMap;
+  laser?: boolean;
+}) {
   const N = 2;
   const core = useRef<THREE.Line>(null);
   const packs = useRef<THREE.Group>(null);
