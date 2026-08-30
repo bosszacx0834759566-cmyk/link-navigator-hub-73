@@ -684,6 +684,60 @@ function PassNetwork({ live, running }: { live: LiveMap; running: boolean }) {
   );
 }
 
+/**
+ * LEO -> HAPS straight green laser links: every HAPS acquires the best LEO
+ * currently above its horizon and holds the optical contact while it passes.
+ */
+const HAPS_RECEIVERS = ASSETS.filter((a) => a.kind === 'haps');
+
+function HapsLaserNetwork({ live, running }: { live: LiveMap; running: boolean }) {
+  const [pairs, setPairs] = useState<string[]>([]);
+  const held = useRef<Set<string>>(new Set());
+  const acc = useRef(0);
+  const tmp = useRef(new THREE.Vector3());
+
+  useFrame((_, d) => {
+    acc.current += d;
+    if (acc.current < 0.3) return;
+    acc.current = 0;
+    if (!running) return;
+
+    const next: string[] = [];
+    for (const rx of HAPS_RECEIVERS) {
+      const rp = live.get(rx.id);
+      if (!rp) continue;
+      let best: { key: string; score: number } | null = null;
+      for (const sat of SATELLITES) {
+        const sp = live.get(sat.id);
+        if (!sp) continue;
+        const score = windowScore(tmp.current.copy(sp), rp);
+        const key = `${sat.id}|${rx.id}`;
+        const threshold = held.current.has(key) ? LOS : ACQUIRE;
+        if (score > threshold && (!best || score > best.score)) best = { key, score };
+      }
+      if (best) next.push(best.key);
+    }
+    next.sort();
+
+    const prev = held.current;
+    if (next.length !== prev.size || next.some((k) => !prev.has(k))) {
+      held.current = new Set(next);
+      setPairs(next);
+    }
+  });
+
+  return (
+    <>
+      {pairs.map((key) => {
+        const [satId, rxId] = key.split('|') as [string, string];
+        return <PassBeam key={key} satId={satId} rxId={rxId} live={live} laser />;
+      })}
+    </>
+  );
+}
+
+
+
 
 /**
  * Live satellite downlink: geometry is re-sampled every frame from the moving
