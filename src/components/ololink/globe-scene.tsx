@@ -546,7 +546,7 @@ function PassBeam({
 
     if (core.current) {
       const m = core.current.material as THREE.LineBasicMaterial;
-      m.opacity = v * 0.28;
+      m.opacity = v * (laser ? 0.95 : 0.28);
       core.current.visible = v > 0.02;
     }
     if (packs.current) {
@@ -579,7 +579,7 @@ function PassBeam({
       {/* @ts-expect-error three line primitive */}
       <line ref={core} geometry={geometry}>
         <lineBasicMaterial
-          color={CYAN}
+          color={laser ? LASER_GREEN : CYAN}
           transparent
           opacity={0}
           depthWrite={false}
@@ -591,7 +591,7 @@ function PassBeam({
           <mesh key={i}>
             <sphereGeometry args={[0.004, 8, 8]} />
             <meshBasicMaterial
-              color="#f0f9ff"
+              color={laser ? '#86efac' : '#f0f9ff'}
               transparent
               opacity={0}
               depthWrite={false}
@@ -677,7 +677,8 @@ function PassNetwork({ live, running }: { live: LiveMap; running: boolean }) {
     <>
       {pairs.map((key) => {
         const [satId, rxId] = key.split('|') as [string, string];
-        return <PassBeam key={key} satId={satId} rxId={rxId} live={live} />;
+        const laser = ASSET_BY_ID[rxId]?.kind === 'haps';
+        return <PassBeam key={key} satId={satId} rxId={rxId} live={live} laser={laser} />;
       })}
     </>
   );
