@@ -2167,6 +2167,8 @@ function SceneContent({
 
       {/* LEO constellation — 20 satellites propagated on their visual orbits */}
       <OrbitDriver state={state} live={live} />
+      <HapsLaserNetwork live={live} running={state.running} />
+
       {layers.orbits && SATELLITES.map((s) => <OrbitTrack key={`trk-${s.id}`} elId={s.id} />)}
       {SATELLITES.map((sat) => (
         <AssetNode
