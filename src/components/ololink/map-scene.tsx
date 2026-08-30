@@ -335,7 +335,64 @@ export function MapScene({ state }: { state: OloLinkState }) {
             preserveAspectRatio="none"
           />
 
-          {/* ------------------------------------------------------- nodes */}
+          {/* ------------------- LEO -> HAPS straight green laser links */}
+          {(() => {
+            const R = Math.PI / 180;
+            const central = (a: LatLon, b: LatLon) => {
+              const c =
+                Math.sin(a.lat * R) * Math.sin(b.lat * R) +
+                Math.cos(a.lat * R) * Math.cos(b.lat * R) * Math.cos((a.lon - b.lon) * R);
+              return (Math.acos(Math.max(-1, Math.min(1, c))) * 180) / Math.PI;
+            };
+            const sats = ASSETS.filter((a) => a.kind === 'satellite');
+            const haps = ASSETS.filter((a) => a.kind === 'haps');
+            const lines: JSX.Element[] = [];
+            for (const h of haps) {
+              const hp = positions[h.id];
+              if (!hp) continue;
+              // nearest LEO currently inside the optical acquisition cone
+              let best: { id: string; d: number } | null = null;
+              for (const s of sats) {
+                const sp = positions[s.id];
+                if (!sp) continue;
+                const d = central(sp, hp);
+                if (d < 16 && (!best || d < best.d)) best = { id: s.id, d };
+              }
+              if (!best) continue;
+              const pa = pointOf(best.id);
+              const pb = pointOf(h.id);
+              if (!pa || !pb) continue;
+              if (Math.abs(pa.x - pb.x) > MAP_W / 2) continue; // antimeridian wrap
+              const strength = 1 - best.d / 16;
+              lines.push(
+                <g key={`laser-${h.id}`}>
+                  <line
+                    x1={pa.x}
+                    y1={pa.y}
+                    x2={pb.x}
+                    y2={pb.y}
+                    stroke="#22c55e"
+                    strokeWidth={3 * inv}
+                    strokeOpacity={0.2 + 0.25 * strength}
+                    strokeLinecap="round"
+                  />
+                  <line
+                    x1={pa.x}
+                    y1={pa.y}
+                    x2={pb.x}
+                    y2={pb.y}
+                    stroke="#4ade80"
+                    strokeWidth={1 * inv}
+                    strokeOpacity={0.6 + 0.4 * strength}
+                    strokeLinecap="round"
+                  />
+                </g>
+              );
+            }
+            return lines;
+          })()}
+
+
           {ASSETS.filter((a) => a.kind === 'satellite' || a.kind === 'haps' || a.kind === 'drone' || a.kind === 'ground').map((a) => {
 
             const p = pointOf(a.id);
